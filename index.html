@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<!--
+  Prompt Filter
+  Copyright (c) [2026] [Sean2047]
+
+  Licensed under CC BY-NC 4.0 (Creative Commons Attribution-NonCommercial 4.0
+  International). You're free to use, share, and adapt this for personal or
+  non-commercial purposes, with attribution. Commercial use requires
+  permission — contact [YOUR CONTACT].
+
+  Full license text: https://creativecommons.org/licenses/by-nc/4.0/
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Filter</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#14161c;
+    --panel:#1b1e27;
+    --panel-2:#20232e;
+    --border:#2a2e3a;
+    --text:#edecf0;
+    --text-dim:#9096a8;
+    --text-faint:#5b6172;
+    --accent:#5b9bd9;
+    --accent-soft:rgba(91,155,217,0.15);
+    --mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --radius:10px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    padding:32px 18px 50px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.16em;
+    color:var(--text-faint);
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  h1{
+    font-size:26px;
+    font-weight:700;
+    margin:0 0 8px;
+    letter-spacing:-.01em;
+  }
+  .subtitle{
+    color:var(--text-dim);
+    font-size:14px;
+    line-height:1.6;
+    margin:0 0 4px;
+  }
+  .privacy-note{
+    color:var(--text-faint);
+    font-size:12px;
+    margin:12px 0 26px;
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 16px;
+    margin-bottom:16px;
+  }
+  .panel-label{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin-bottom:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+  }
+
+  textarea{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    padding:12px 13px;
+    resize:vertical;
+    transition:border-color .25s ease, box-shadow .25s ease;
+  }
+  textarea:focus-visible, button:focus-visible{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  #inputBox{min-height:80px;}
+  #outputBox{min-height:200px; font-family:var(--mono); font-size:12.5px; line-height:1.65;}
+
+  .group-label{
+    font-size:11.5px;
+    color:var(--text-faint);
+    font-weight:600;
+    letter-spacing:.03em;
+    margin:2px 0 8px;
+  }
+  .group-label:not(:first-child){margin-top:14px;}
+
+  .chip-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .chip{
+    font-family:var(--sans);
+    font-size:13.5px;
+    color:var(--text-dim);
+    background:transparent;
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:9px 15px;
+    cursor:pointer;
+    transition:border-color .2s ease, background .2s ease, color .2s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .chip:hover{border-color:var(--text-faint);}
+  .chip.active{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+    color:var(--text);
+  }
+
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    margin:0 2px 16px;
+  }
+  .toggle{position:relative;display:inline-block;width:36px;height:21px;flex:0 0 auto;cursor:pointer;}
+  .toggle input{opacity:0;width:0;height:0;position:absolute;}
+  .toggle-track{position:absolute;inset:0;background:var(--panel-2);border:1px solid var(--border);border-radius:999px;transition:background .2s ease, border-color .2s ease;}
+  .toggle-thumb{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--text-faint);transition:transform .2s ease, background .2s ease;}
+  .toggle input:checked + .toggle-track{background:var(--accent-soft);border-color:var(--accent);}
+  .toggle input:checked + .toggle-track .toggle-thumb{transform:translateX(15px);background:var(--accent);}
+  .toggle input:focus-visible + .toggle-track{box-shadow:0 0 0 3px var(--accent-soft);}
+  .toggle-label{font-size:12.5px;color:var(--text-dim); line-height:1.5;}
+  .toggle-hint{color:var(--text-faint);}
+
+  .desc-row{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    padding:12px 14px;
+    background:var(--accent-soft);
+    border:1px solid var(--border);
+    border-radius:8px;
+    margin-bottom:16px;
+  }
+  .desc-dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--accent);
+    margin-top:6px;
+    flex:0 0 auto;
+  }
+  .desc-text{font-size:13px; color:var(--text); line-height:1.55;}
+  .desc-text b{color:var(--text);}
+
+  .copy-btn{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.04em;
+    color:var(--text);
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:6px 11px;
+    cursor:pointer;
+    transition:border-color .2s ease;
+  }
+  .copy-btn:hover{border-color:var(--accent);}
+  .copy-btn.copied{color:var(--accent); border-color:var(--accent);}
+
+  footer{
+    margin-top:22px;
+    font-size:11.5px;
+    color:var(--text-faint);
+    line-height:1.6;
+  }
+  .license-note{
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+  }
+  .license-note a{color:var(--text-faint);}
+
+  @media (max-width:420px){
+    body{padding:24px 14px 40px;}
+    h1{font-size:22px;}
+    .panel{padding:14px 13px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Prompt Tool</div>
+  <h1>Prompt Filter</h1>
+  <p class="subtitle">Type your question, pick a filter, and get a sharper prompt to paste into whatever AI you're using.</p>
+  <p class="privacy-note">Runs entirely in your browser — fixed templates, no model calls, nothing leaves your device.</p>
+
+  <div class="panel">
+    <div class="panel-label">Your question</div>
+    <textarea id="inputBox" placeholder="e.g. Why is the sky blue?&#10;e.g. Should I quit my job to start a business?"></textarea>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Choose a filter</div>
+    <div class="group-label">Focused</div>
+    <div class="chip-row" id="focusedRow"></div>
+    <div class="group-label">Playful</div>
+    <div class="chip-row" id="playfulRow"></div>
+  </div>
+
+  <div class="toggle-row">
+    <label class="toggle">
+      <input type="checkbox" id="summaryToggle" checked>
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+    </label>
+    <span class="toggle-label">Summary first, then details <span class="toggle-hint">(recommended — most people want the takeaway first)</span></span>
+  </div>
+
+  <div class="desc-row">
+    <div class="desc-dot" id="descDot"></div>
+    <div class="desc-text" id="descText"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">
+      <span>Output</span>
+      <button class="copy-btn" id="copyBtn">Copy</button>
+    </div>
+    <textarea id="outputBox" readonly></textarea>
+  </div>
+
+  <footer>
+    You can edit the output before copying. Changing the question, filter, or toggle regenerates it and overwrites unsaved edits.
+    <p class="license-note">&copy; <span id="year"></span> [Sean2047] <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a> — free for personal use, contact for commercial use.</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+
+  const ACCENTS = { focused:'#5b9bd9', playful:'#e8895a' };
+
+  const filters = [
+    {
+      id:'minimalist', group:'focused', name:'Minimalist',
+      desc:'<b>Minimalist</b> — no preamble, no padding, straight to the point.',
+      core:`Answer directly and concisely. Requirements:
+1. Open with the core conclusion or answer in the very first sentence.
+2. Add at most 3-5 supporting bullet points, each no more than one line.
+3. No preamble, no restating the question, no closing summary filler.
+4. If the question is ambiguous, state your default interpretation in one sentence, then answer.`
+    },
+    {
+      id:'socratic', group:'focused', tentative:true, name:'Socratic',
+      desc:'<b>Socratic</b> — doesn\u2019t hand you the answer, asks the questions that get you there.',
+      core:`Act as a Socratic dialogue partner. Don't give the final answer right away. Instead:
+1. Identify 1-3 key assumptions hidden in this question.
+2. Ask 2-3 probing questions that help me work through those assumptions myself.
+3. If any concept in the question is vague or needs defining first, point that out and ask me to clarify.
+4. You may offer a brief initial take at the end, but frame it as a starting point, not a conclusion.`
+    },
+    {
+      id:'scientist', group:'focused', name:'Scientist',
+      desc:'<b>Scientist</b> — evidence-based, careful about confidence, upfront about limitations.',
+      core:`Analyze this using scientific reasoning, not just scientific tone. Requirements:
+1. Clarify any ambiguous terms and identify exactly what's being asked.
+2. Separate descriptive claims (what is) from causal claims (what causes what).
+3. Identify the key hypotheses or mechanisms that could explain it, and what evidence would support or contradict each.
+4. Distinguish established evidence, plausible interpretation, and speculation.
+5. Note real limitations, confounders, or open debates — don't invent evidence, citations, or consensus that isn't there.
+6. Use precise language — avoid absolutes and hype.`
+    },
+    {
+      id:'perspectives', group:'focused', name:'Multiple Perspectives',
+      desc:'<b>Multiple Perspectives</b> — lays out competing views side by side, without picking a winner.',
+      core:`Identify the genuinely relevant competing perspectives on this question — not an artificial count. Requirements:
+1. Present the positions that are actually backed by meaningful reasoning or evidence; don't manufacture a perspective just to hit a number.
+2. For each, give its strongest argument and the evidence behind it.
+3. Point out exactly where these perspectives genuinely disagree.
+4. If the evidence clearly favors one position, say so — don't force false balance.
+5. Don't resolve it for me — end with one line on what factors matter most if I need to decide.`
+    },
+    {
+      id:'feynman', group:'focused', name:'Feynman',
+      desc:'<b>Feynman</b> — plain language and everyday analogies, zero jargon.',
+      core:`Explain this the way Richard Feynman would to someone with zero background in the topic. Requirements:
+1. Open with an everyday analogy or comparison.
+2. Avoid jargon; if a technical term is unavoidable, immediately explain it in plain language.
+3. Break the explanation into a few simple steps that build on each other.
+4. Double-check your own analogy — does it actually hold up, or does it quietly hide the hard part?
+5. Close with a one- or two-sentence summary I could repeat to someone else.`
+    },
+    {
+      id:'consultant', group:'focused', name:'Consultant',
+      desc:'<b>Consultant</b> — structured and action-oriented: options, recommendation, risks, next steps.',
+      core:`Answer like a senior business consultant. First figure out what's actually being asked — what decision (if any) needs to be made, what objective matters most, and what constraints are real. Then structure your answer as:
+1. Situation summary (1-2 sentences)
+2. Options (2-4 concrete options, each with pros and cons) — only if this genuinely is a decision between alternatives
+3. Recommended option and why
+4. Key risks and how to mitigate them
+5. Concrete next steps (specific and measurable)
+Avoid vague generalities — be specific and practical. If the question doesn't call for a menu of options, don't force one.`
+    },
+    {
+      id:'devil', group:'playful', name:"Devil's Advocate",
+      desc:'<b>Devil\u2019s Advocate</b> — actively challenges your thinking, finds the holes first.',
+      core:`Play devil's advocate. Don't go along with my framing — actively challenge it, but don't object just for the sake of objecting. Requirements:
+1. Identify the weakest points, biases, or untested assumptions in this question or the thinking behind it.
+2. List the strongest counterarguments or risks — only ones that could actually change the conclusion.
+3. Describe the scenarios where this idea is most likely to fail or backfire.
+4. Sort your objections: which are decisive, which are minor, which don't really hold up.
+5. End with the one thing I'd most need to strengthen to defend this position.
+Be sharp but constructive — critique the idea, not the person.`
+    },
+    {
+      id:'poet', group:'playful', name:'Poet',
+      desc:'<b>Poet</b> — vivid, image-driven language, without sacrificing accuracy.',
+      core:`Respond using vivid, literary language — metaphor, imagery, a sense of rhythm.`
+    },
+    {
+      id:'dj', group:'playful', license:true, name:'Late-Night DJ',
+      desc:'<b>Late-Night DJ</b> — warm, casual radio-host energy, like a friend talking.',
+      core:`Answer like a late-night radio DJ talking to a listener. Requirements:
+1. Keep the tone conversational and warm, like you're talking to a friend, not reading a report.
+2. Use everyday, relatable comparisons.
+3. You can close with a light, easygoing sign-off — just don't make it feel like filler.`
+    },
+    {
+      id:'trailer', group:'playful', license:true, name:'Movie Trailer Voice',
+      desc:'<b>Movie Trailer Voice</b> — big, dramatic \u201cin a world...\u201d narration.',
+      core:`Answer in the voice of a movie trailer narrator — big, dramatic, cinematic pacing, the kind of voice that says "In a world...". Requirements:
+1. Use dramatic pauses, bold framing, and a sense of stakes.
+2. Close with a punchy, trailer-style line, or land the answer cleanly — whichever fits better.`
+    },
+    {
+      id:'roast', group:'playful', license:true, name:'Roast Comedian',
+      desc:'<b>Roast Comedian</b> — sharp and funny, roasts the topic (not you), then gets real.',
+      core:`Respond with sharp, comedic, slightly savage energy — like a roast — but the target is the question or topic itself, not me personally. Requirements:
+1. Feel free to exaggerate, use punchy comparisons, and go for real laughs.
+2. Close with a line or two where you drop the act and give the genuinely useful takeaway.
+3. Keep the humor sharp but not cruel — no slurs, no personal attacks, no punching down.`
+    },
+    {
+      id:'rap', group:'playful', license:true, name:'Rap Battle',
+      desc:'<b>Rap Battle</b> — rhymes and rhythm, freestyle energy, still says something real.',
+      core:`Respond as a freestyle rap verse — rhyming, rhythmic, confident delivery. Requirements:
+1. Prioritize rhyme and flow; format it in short lines like lyrics.
+2. Keep the confident, direct energy of a rap battle, but no profanity and no personal attacks.
+3. Keep it short — a couple of rhyming verses is enough, no need for a full song structure.`
+    }
+  ];
+
+  const focusedRow = document.getElementById('focusedRow');
+  const playfulRow = document.getElementById('playfulRow');
+  const descDot = document.getElementById('descDot');
+  const descText = document.getElementById('descText');
+  const inputBox = document.getElementById('inputBox');
+  const outputBox = document.getElementById('outputBox');
+  const copyBtn = document.getElementById('copyBtn');
+  const summaryToggle = document.getElementById('summaryToggle');
+
+  let activeId = 'scientist';
+
+  function makeChip(f){
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'chip';
+    el.dataset.id = f.id;
+    el.textContent = f.name;
+    el.addEventListener('click', ()=>select(f.id));
+    return el;
+  }
+
+  filters.filter(f=>f.group==='focused').forEach(f=> focusedRow.appendChild(makeChip(f)) );
+  filters.filter(f=>f.group==='playful').forEach(f=> playfulRow.appendChild(makeChip(f)) );
+
+  summaryToggle.addEventListener('change', render);
+
+  function hexToRgba(hex, a){
+    const v = hex.replace('#','');
+    const r = parseInt(v.substring(0,2),16);
+    const g = parseInt(v.substring(2,4),16);
+    const b = parseInt(v.substring(4,6),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function select(id){
+    activeId = id;
+    const f = filters.find(x=>x.id===id);
+    const accent = ACCENTS[f.group];
+
+    document.documentElement.style.setProperty('--accent', accent);
+    document.documentElement.style.setProperty('--accent-soft', hexToRgba(accent,0.15));
+
+    document.querySelectorAll('.chip').forEach(c=>{
+      c.classList.toggle('active', c.dataset.id===id);
+    });
+
+    descDot.style.background = accent;
+    descText.innerHTML = f.desc;
+
+    render();
+  }
+
+  function buildPrompt(f, q, summaryFirst){
+    const rules = [];
+    rules.push(f.license
+      ? "- The goal is still a genuinely useful answer — including being honest when the question has no settled answer, rather than inventing false certainty. Hyperbole, absurd framing, and obvious exaggeration are fine — that's often where the humor lives. Don't invent facts, numbers, or claims that could be mistaken for real ones."
+      : '- Give a genuinely accurate, substantive answer. If the question has no single settled answer — it\'s genuinely uncertain, contested, or depends on circumstances only I know — say that plainly instead of manufacturing false certainty. The approach below shapes delivery, not substance.'
+    );
+    rules.push("- Apply the approach only where it genuinely helps — don't force extra complexity or caveats onto a question that doesn't need them.");
+    if(summaryFirst){
+      if(f.tentative){
+        rules.push('- Open with a 1-2 sentence plain line naming a tentative starting stance — clearly framed as a possible position to test, not a final answer. No styling in that opening line.');
+        rules.push('- Close by restating that same tentative stance in one sentence, still framed as a starting point, not a conclusion.');
+      }else{
+        rules.push("- Open with a 1-2 sentence plain take: the direct answer if there is one, or an honest \"this is unsettled / it depends on X\" if there isn't. No styling in that opening line. Everything after it should fully commit to the approach below, not hedge back toward a neutral tone.");
+        rules.push('- Close by restating that same plain take in one sentence, so nothing in between is left uncorrected.');
+      }
+    }
+    rules.push('- Respond in the same language as the question above.');
+
+    const parts = [
+      `Question: ${q}`,
+      rules.join('\n'),
+      `Approach:\n${f.core.trim()}`
+    ];
+    return parts.join('\n\n');
+  }
+
+  function render(){
+    const f = filters.find(x=>x.id===activeId);
+    const q = inputBox.value.trim();
+    if(!q){
+      outputBox.value = 'Type your question above and pick a filter — the finished prompt will show up here.';
+      copyBtn.disabled = true;
+      copyBtn.style.opacity = '.5';
+    }else{
+      outputBox.value = buildPrompt(f, q, summaryToggle.checked);
+      copyBtn.disabled = false;
+      copyBtn.style.opacity = '1';
+    }
+  }
+
+  inputBox.addEventListener('input', render);
+
+  copyBtn.addEventListener('click', async ()=>{
+    if(copyBtn.disabled) return;
+    const text = outputBox.value;
+
+    // 1) modern Clipboard API — works on desktop, often blocked in mobile/iframe contexts
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        flashCopied();
+        return;
+      }
+    }catch(e){ /* fall through */ }
+
+    // 2) legacy execCommand — not gated by clipboard permissions policy, more reliable on Android
+    try{
+      outputBox.focus();
+      outputBox.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      if(ok){
+        flashCopied();
+        return;
+      }
+    }catch(e){ /* fall through */ }
+
+    // 3) last resort — leave it selected for a manual copy
+    outputBox.focus();
+    outputBox.select();
+    flashCopied('Selected — copy it manually');
+  });
+
+  function flashCopied(label){
+    const original = 'Copy';
+    copyBtn.textContent = label || 'Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(()=>{
+      copyBtn.textContent = original;
+      copyBtn.classList.remove('copied');
+    },1600);
+  }
+
+  select('scientist');
+
+  const yearEl = document.getElementById('year');
+  if(yearEl) yearEl.textContent = new Date().getFullYear();
+})();
+</script>
+</body>
+</html>
