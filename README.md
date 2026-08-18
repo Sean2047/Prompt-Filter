@@ -2,7 +2,7 @@
 
 A tiny, single-file web tool: type a question, pick a filter, get back a sharper prompt to paste into whatever AI you're using.
 
-**[Try it](./indfex.html)** — no install, no account, nothing sent anywhere.
+**[Try it](./index.html)** — no install, no account, nothing sent anywhere.
 
 ## What it does
 
